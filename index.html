@@ -1,0 +1,2469 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kviz - Savremene Softverske Arhitekture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* Login styles */
+        .login-container {
+            padding: 50px 30px;
+            text-align: center;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .login-form {
+            max-width: 400px;
+            margin: 30px auto 0;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #ffffff;
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 25px;
+            background: #ffffff;
+            color: #4CAF50;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .logout-btn {
+            background: rgba(220, 53, 69, 0.8);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(220, 53, 69, 1);
+        }
+
+        /* Hide quiz content initially */
+        .quiz-section {
+            display: none;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .quiz-navigation {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-select {
+            padding: 10px 15px;
+            border: 2px solid #4CAF50;
+            border-radius: 25px;
+            background: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .section-select:hover {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .progress-container {
+            flex: 1;
+            min-width: 200px;
+            margin: 0 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .quiz-content {
+            padding: 30px;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #4CAF50;
+        }
+
+        .question-number {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .question-section {
+            background: #e8f5e8;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #2d5a2d;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .question-text strong {
+            color: #4CAF50;
+        }
+
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .options {
+            display: grid;
+            gap: 12px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .option:hover {
+            border-color: #4CAF50;
+            background: #f8fff8;
+        }
+
+        .option.selected {
+            background: #e8f5e8;
+            border-color: #4CAF50;
+        }
+
+        /* Novi stilovi za označavanje tačnih/netačnih odgovora */
+        .option.correct {
+            background: #d4edda !important;
+            border-color: #28a745 !important;
+            color: #155724;
+        }
+
+        .option.incorrect {
+            background: #f8d7da !important;
+            border-color: #dc3545 !important;
+            color: #721c24;
+        }
+
+        .option.user-incorrect {
+            background: #fff3cd !important;
+            border-color: #ffc107 !important;
+            color: #856404;
+        }
+
+        .answer-indicator {
+            position: absolute;
+            right: 15px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .answer-indicator.correct::before {
+            content: "✅ Tačno";
+            color: #28a745;
+        }
+
+        .answer-indicator.incorrect::before {
+            content: "❌ Netačno";
+            color: #dc3545;
+        }
+
+        .answer-indicator.user-choice::before {
+            content: "👤 Vaš izbor";
+            color: #ffc107;
+        }
+
+        .text-input, .textarea-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .text-input:focus, .textarea-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .textarea-input {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        /* Stilovi za označavanje tekstualnih odgovora */
+        .text-input.correct, .textarea-input.correct {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .text-input.incorrect, .textarea-input.incorrect {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .text-input.partial, .textarea-input.partial {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .correct-answer-display {
+            margin-top: 10px;
+            padding: 10px;
+            background: #d4edda;
+            border: 1px solid #28a745;
+            border-radius: 5px;
+            color: #155724;
+            font-weight: bold;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .results-container {
+            text-align: center;
+            padding: 40px 30px;
+        }
+
+        .results-score {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        .results-details {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .section-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .section-result:last-child {
+            border-bottom: none;
+        }
+
+        .results-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .review-mode {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: #856404;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .quiz-navigation {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .progress-container {
+                margin: 10px 0;
+                width: 100%;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .navigation-buttons {
+                flex-direction: column;
+            }
+
+            .results-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Section -->
+        <div id="loginSection" class="login-container">
+            <h1>🎓 Kviz - Savremene Softverske Arhitekture</h1>
+            <p>Molimo unesite vaš broj indeksa da biste pristupili kvizu</p>
+            
+            <div class="login-form">
+                <input type="text" id="studentIndex" class="login-input" placeholder="Unesite broj indeksa (npr: 123-2021)" maxlength="20">
+                <button onclick="login()" id="loginBtn" class="login-btn">🚀 Pristupi kvizu</button>
+                <div id="loginError" class="error-message"></div>
+            </div>
+        </div>
+
+        <!-- Quiz Section (hidden initially) -->
+        <div id="quizSection" class="quiz-section">
+            <div class="header">
+                <div class="user-info" id="userInfo">
+                    <span>👤 Student: <strong id="currentStudent"></strong></span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button onclick="retryServerConnection()" id="retryBtn" class="logout-btn" style="background: rgba(23, 162, 184, 0.8); display: none;" title="Pokušaj ponovnog slanja podataka na server">
+                            🔄 Ponovi
+                        </button>
+                        <button onclick="logout()" class="logout-btn">Odjavi se</button>
+                    </div>
+                </div>
+                <h1>🎓 Kviz - Savremene Softverske Arhitekture</h1>
+                <p>150 pitanja iz 7 oblasti za vežbanje</p>
+                <div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 10px; font-size: 14px;">
+                    <strong>📝 Instrukcije:</strong><br>
+                    • Za pitanja sa više odgovora koristite <strong>/</strong> kao separator (npr: odgovor1/odgovor2/odgovor3)<br>
+                    • Za tekstualna pitanja pišite kratko i jasno (2-3 rečenice)<br>
+                    • Možete navigirati strelicama ← → ili dugmićima<br>
+                    • Nakon završetka videćete tačne odgovore označene <span style="color: #28a745;">✅ zeleno</span> i netačne <span style="color: #dc3545;">❌ crveno</span>
+                </div>
+            </div>
+
+            <div id="reviewModeIndicator" class="review-mode hidden">
+                📋 <strong>Režim pregleda odgovora</strong> - Zeleno = tačan odgovor, Crveno = netačan odgovor, Žuto = vaš izbor
+            </div>
+
+            <div class="quiz-navigation">
+                <select class="section-select" id="sectionSelect">
+                    <option value="all">Sva pitanja</option>
+                    <option value="0">REST Arhitektura (1-20)</option>
+                    <option value="1">Git i Verzioniranje (21-35)</option>
+                    <option value="2">ASP.NET Web API (36-60)</option>
+                    <option value="3">Entity Framework (61-85)</option>
+                    <option value="4">Angular Osnove (86-110)</option>
+                    <option value="5">Docker i Mikroservisi (111-135)</option>
+                    <option value="6">Redis i Keširanje (136-150)</option>
+                </select>
+
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">0 / 0</div>
+                </div>
+
+                <button class="btn btn-primary" onclick="showResults()">📊 Prikaži rezultate</button>
+            </div>
+
+            <div class="quiz-content" id="quizContent">
+                <!-- Questions will be loaded here -->
+            </div>
+
+            <div class="navigation-buttons">
+                <button class="btn btn-secondary" id="prevBtn" onclick="previousQuestion()">⬅️ Prethodna</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Sledeća ➡️</button>
+            </div>
+
+            <div class="results-container hidden" id="resultsContainer">
+                <h2>🎯 Vaši rezultati</h2>
+                <div class="results-score" id="totalScore">0%</div>
+                <div class="results-details" id="sectionResults"></div>
+                <div class="results-buttons">
+                    <button class="btn btn-info" onclick="reviewAnswers()">🔍 Pregledaj odgovore</button>
+                    <button class="btn btn-primary" onclick="restartQuiz()">🔄 Ponovo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Login functionality
+        let currentUser = {
+            index: '',
+            ipAddress: ''
+        };
+
+        async function getClientIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data.ip;
+            } catch (error) {
+                console.error('Error getting IP:', error);
+                // Fallback - try alternative service
+                try {
+                    const response = await fetch('https://ipapi.co/json/');
+                    const data = await response.json();
+                    return data.ip;
+                } catch (fallbackError) {
+                    console.error('Fallback IP service failed:', fallbackError);
+                    return 'unavailable';
+                }
+            }
+        }
+
+        async function login() {
+            const studentIndex = document.getElementById('studentIndex').value.trim();
+            const loginBtn = document.getElementById('loginBtn');
+            const errorDiv = document.getElementById('loginError');
+
+            // Reset error message
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+
+            // Validate input
+            if (!studentIndex) {
+                showError('Molimo unesite broj indeksa.');
+                return;
+            }
+
+            if (studentIndex.length < 3) {
+                showError('Broj indeksa mora imati najmanje 3 karaktera.');
+                return;
+            }
+
+            // Disable button and show loading
+            loginBtn.disabled = true;
+            loginBtn.textContent = '⏳ Prijavljivanje...';
+
+            try {
+                // Get client IP address
+                const ipAddress = await getClientIP();
+                
+                // Prepare data for server
+                const userData = {
+                    studentIndex: studentIndex,
+                    ipAddress: ipAddress,
+                    timestamp: new Date().toISOString(),
+                    userAgent: navigator.userAgent
+                };
+
+                // Try to send data to server
+                let serverAvailable = false;
+                try {
+                    const response = await fetch('http://91.187.132.51:9999/kviz', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(userData),
+                        // Add timeout for quicker failure detection
+                        signal: AbortSignal.timeout(5000) // 5 second timeout
+                    });
+
+                    if (response.ok) {
+                        serverAvailable = true;
+                        console.log('✅ Podaci uspešno poslati na server');
+                    } else {
+                        console.warn(`⚠️ Server odgovor: ${response.status} - ${await response.text()}`);
+                    }
+                } catch (serverError) {
+                    console.warn('⚠️ Server nije dostupan:', serverError.message);
+                    // Store data locally for potential later sending
+                    try {
+                        const pendingData = JSON.parse(localStorage.getItem('pendingUserData') || '[]');
+                        pendingData.push(userData);
+                        localStorage.setItem('pendingUserData', JSON.stringify(pendingData));
+                        console.log('📱 Podaci sačuvani lokalno za kasnije slanje');
+                    } catch (localStorageError) {
+                        console.warn('Greška pri lokalnom čuvanju:', localStorageError);
+                    }
+                }
+
+                // Always allow access to quiz regardless of server status
+                currentUser.index = studentIndex;
+                currentUser.ipAddress = ipAddress;
+                
+                // Show quiz interface
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('quizSection').style.display = 'block';
+                document.getElementById('currentStudent').textContent = studentIndex;
+                
+                // Show server status in user info
+                const userInfo = document.getElementById('userInfo');
+                if (serverAvailable) {
+                    // Server is available - show normal state
+                    userInfo.style.background = 'rgba(255, 255, 255, 0.1)';
+                    userInfo.innerHTML = `
+                        <span>👤 Student: <strong>${studentIndex}</strong></span>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button onclick="logout()" class="logout-btn">Odjavi se</button>
+                        </div>
+                    `;
+                } else {
+                    // Server not available - show offline mode
+                    userInfo.style.background = 'rgba(255, 193, 7, 0.2)'; // Orange background
+                    userInfo.innerHTML = `
+                        <span>👤 Student: <strong>${studentIndex}</strong> <span style="color: #ff9800; font-size: 12px;">(📡 Offline režim)</span></span>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button onclick="retryServerConnection()" id="retryBtn" class="logout-btn" style="background: rgba(23, 162, 184, 0.8);" title="Pokušaj ponovnog slanja podataka na server">
+                                🔄 Ponovi
+                            </button>
+                            <button onclick="logout()" class="logout-btn">Odjavi se</button>
+                        </div>
+                    `;
+                }
+                
+                // Initialize quiz
+                initQuiz();
+
+            } catch (error) {
+                console.error('Login error:', error);
+                
+                // Even if there's an error, allow access to quiz
+                currentUser.index = studentIndex;
+                currentUser.ipAddress = 'unavailable';
+                
+                // Show quiz interface with warning
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('quizSection').style.display = 'block';
+                document.getElementById('currentStudent').textContent = studentIndex;
+                
+                // Show warning in user info
+                const userInfo = document.getElementById('userInfo');
+                userInfo.style.background = 'rgba(220, 53, 69, 0.2)'; // Red background
+                userInfo.innerHTML = `
+                    <span>👤 Student: <strong>${studentIndex}</strong> <span style="color: #dc3545; font-size: 12px;">(⚠️ Greška mreže)</span></span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button onclick="retryServerConnection()" id="retryBtn" class="logout-btn" style="background: rgba(23, 162, 184, 0.8);" title="Pokušaj ponovnog slanja podataka na server">
+                            🔄 Ponovi
+                        </button>
+                        <button onclick="logout()" class="logout-btn">Odjavi se</button>
+                    </div>
+                `;
+                
+                // Initialize quiz
+                initQuiz();
+                
+            } finally {
+                // Re-enable button
+                loginBtn.disabled = false;
+                loginBtn.textContent = '🚀 Pristupi kvizu';
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function logout() {
+            if (confirm('Da li ste sigurni da se želite odjaviti? Svi nesačuvani podaci će biti izgubljeni.')) {
+                // Try to send any pending data before logout
+                sendPendingDataToServer();
+                
+                // Reset user data
+                currentUser = { index: '', ipAddress: '' };
+                userAnswers = {};
+                currentQuestionIndex = 0;
+                isReviewMode = false;
+                
+                // Reset form
+                document.getElementById('studentIndex').value = '';
+                
+                // Reset user info styling
+                const userInfo = document.getElementById('userInfo');
+                userInfo.style.background = 'rgba(255, 255, 255, 0.1)';
+                userInfo.innerHTML = `
+                    <span>👤 Student: <strong id="currentStudent"></strong></span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button onclick="logout()" class="logout-btn">Odjavi se</button>
+                    </div>
+                `;
+                
+                // Show login interface
+                document.getElementById('quizSection').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
+                
+                // Hide results if showing
+                document.getElementById('resultsContainer').classList.add('hidden');
+                document.getElementById('reviewModeIndicator').classList.add('hidden');
+            }
+        }
+
+        // Function to attempt sending pending data to server
+        async function sendPendingDataToServer() {
+            try {
+                const pendingData = JSON.parse(localStorage.getItem('pendingUserData') || '[]');
+                if (pendingData.length === 0) return;
+
+                console.log(`📤 Pokušavam slanje ${pendingData.length} pending zahteva...`);
+                
+                for (const userData of pendingData) {
+                    try {
+                        const response = await fetch('http://91.187.132.51:9999/kviz/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(userData),
+                            signal: AbortSignal.timeout(3000) // 3 second timeout
+                        });
+                        
+                        if (response.ok) {
+                            console.log('✅ Uspešno poslani pending podaci za:', userData.studentIndex);
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Neuspešno slanje pending podataka:', error.message);
+                        break; // Stop trying if server is still not available
+                    }
+                }
+                
+                // Clear pending data after attempting to send
+                localStorage.removeItem('pendingUserData');
+                
+            } catch (error) {
+                console.warn('Greška pri slanju pending podataka:', error);
+            }
+        }
+
+        // Try to send pending data when page becomes visible (user returns to tab)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && currentUser.index) {
+                sendPendingDataToServer();
+            }
+        });
+
+        // Function to manually retry server connection
+        async function retryServerConnection() {
+            const retryBtn = document.getElementById('retryBtn');
+            const userInfo = document.getElementById('userInfo');
+            
+            // Show loading state
+            retryBtn.disabled = true;
+            retryBtn.textContent = '⏳ Slanje...';
+            
+            try {
+                // Try to send current user data
+                const userData = {
+                    studentIndex: currentUser.index,
+                    ipAddress: currentUser.ipAddress,
+                    timestamp: new Date().toISOString(),
+                    userAgent: navigator.userAgent
+                };
+
+                const response = await fetch('http://91.187.132.51:9999/kviz/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData),
+                    signal: AbortSignal.timeout(5000)
+                });
+
+                if (response.ok) {
+                    // Success - update UI to show online status
+                    userInfo.style.background = 'rgba(40, 167, 69, 0.2)'; // Green background
+                    userInfo.innerHTML = `
+                        <span>👤 Student: <strong>${currentUser.index}</strong> <span style="color: #28a745; font-size: 12px;">(✅ Povezano)</span></span>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button onclick="logout()" class="logout-btn">Odjavi se</button>
+                        </div>
+                    `;
+                    
+                    // Also try to send any pending data
+                    await sendPendingDataToServer();
+                    
+                    console.log('✅ Uspešno povezano sa serverom');
+                    
+                    // Hide the retry button after successful connection
+                    setTimeout(() => {
+                        const retryBtnCurrent = document.getElementById('retryBtn');
+                        if (retryBtnCurrent) {
+                            retryBtnCurrent.style.display = 'none';
+                        }
+                    }, 2000);
+                    
+                } else {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                
+            } catch (error) {
+                console.warn('⚠️ Retry failed:', error.message);
+                
+                // Keep the offline/error status
+                userInfo.style.background = 'rgba(255, 193, 7, 0.2)'; // Orange background
+                userInfo.innerHTML = `
+                    <span>👤 Student: <strong>${currentUser.index}</strong> <span style="color: #ff9800; font-size: 12px;">(📡 Offline režim)</span></span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button onclick="retryServerConnection()" id="retryBtn" class="logout-btn" style="background: rgba(23, 162, 184, 0.8);" title="Pokušaj ponovnog slanja podataka na server">
+                            🔄 Ponovi
+                        </button>
+                        <button onclick="logout()" class="logout-btn">Odjavi se</button>
+                    </div>
+                `;
+                
+            } finally {
+                // Reset button state
+                const currentRetryBtn = document.getElementById('retryBtn');
+                if (currentRetryBtn) {
+                    currentRetryBtn.disabled = false;
+                    currentRetryBtn.textContent = '🔄 Ponovi';
+                }
+            }
+        }
+
+        // Try to send pending data when page becomes visible (user returns to tab)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && currentUser.index) {
+                sendPendingDataToServer();
+            }
+        });
+
+        // Try to send pending data when page is being unloaded
+        window.addEventListener('beforeunload', function() {
+            sendPendingDataToServer();
+        });
+
+        // Allow Enter key to submit login
+        document.getElementById('studentIndex').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+
+        // Rest of the quiz code...
+        const questions = [
+            // REST Arhitektura (1-20)
+            {
+                section: 0,
+                number: 1,
+                text: "REST arhitektura se sastoji od klijenta i ________.",
+                type: "multiple",
+                options: ["backend-a", "servera", "baze podataka", "API-ja"],
+                answer: "b"
+            },
+            {
+                section: 0,
+                number: 2,
+                text: "Skraćenica REST znači:",
+                type: "multiple",
+                options: ["Representational State Transfer", "Remote Execution State Technology", "Relational Entity State Transport", "Real-time Execution Service Transfer"],
+                answer: "a"
+            },
+            {
+                section: 0,
+                number: 3,
+                text: "Objasnite u 2-3 rečenice zašto je odvajanje front-end i back-end sloja važno u REST arhitekturi.",
+                type: "text",
+                answer: "Objašnjava nezavisnost i fleksibilnost razvoja"
+            },
+            {
+                section: 0,
+                number: 4,
+                text: "Dopunite: CRUD operacije predstavljaju _______, _______, _______ i _______.",
+                type: "fill",
+                answer: "Create/Read/Update/Delete"
+            },
+            {
+                section: 0,
+                number: 5,
+                text: "HTTP GET metoda se koristi za:",
+                type: "multiple",
+                options: ["dodavanje podataka", "brisanje podataka", "dobijanje podataka", "ažuriranje podataka"],
+                answer: "c"
+            },
+            {
+                section: 0,
+                number: 6,
+                text: "Analizirajte sledeći kod i objasnite šta radi:\n\n```javascript\nfetch('/api/users')\n  .then(response => response.json())\n  .then(data => console.log(data));\n```\n\n**Objašnjenje (2-3 rečenice):**",
+                type: "text",
+                answer: "Šalje GET zahtev i prikazuje podatke"
+            },
+            {
+                section: 0,
+                number: 7,
+                text: "Koje tehnologije se najčešće koriste za front-end aplikacije?",
+                type: "multiple",
+                options: ["Java, C#, PHP", "Angular, React, Knockout", "SQL Server, MySQL", "Docker, Redis"],
+                answer: "b"
+            },
+            {
+                section: 0,
+                number: 8,
+                text: "Dopunite kod za HTTP POST zahtev:\n\n```javascript\nfetch('/api/users', {\n  method: '_______',\n  headers: {\n    'Content-Type': '_______'\n  },\n  body: JSON.stringify(userData)\n})\n```",
+                type: "fill",
+                answer: "POST/application/json"
+            },
+            {
+                section: 0,
+                number: 9,
+                text: "Tačno ili netačno: Ista komponenta može da funkcioniše i kao back-end i kao front-end.",
+                type: "boolean",
+                answer: "Netačno"
+            },
+            {
+                section: 0,
+                number: 10,
+                text: "JSON format se koristi za:",
+                type: "multiple",
+                options: ["konfiguraciju servera", "čuvanje baze podataka", "razmenu podataka između klijenta i servera", "pisanje programskog koda"],
+                answer: "c"
+            },
+            {
+                section: 0,
+                number: 11,
+                text: "Napišite JSON objekat koji predstavlja korisnika sa poljima id, name i email:\n\n```json\n{\n  \"_______\": 1,\n  \"_______\": \"Marko Petrović\",\n  \"_______\": \"marko@email.com\"\n}\n```",
+                type: "fill",
+                answer: "id/name/email"
+            },
+            {
+                section: 0,
+                number: 12,
+                text: "Mobile aplikacije komuniciraju sa serverom preko:",
+                type: "multiple",
+                options: ["Bluetooth protokola", "API poziva", "direktne konekcije na bazu", "email servisa"],
+                answer: "b"
+            },
+            {
+                section: 0,
+                number: 13,
+                text: "Objasnite prednosti mikroservisne arhitekture u odnosu na monolitnu (2-3 rečenice):",
+                type: "text",
+                answer: "Skalabilnost, nezavisnost, održivost"
+            },
+            {
+                section: 0,
+                number: 14,
+                text: "Tačno ili netačno: Više različitih klijentskih aplikacija može koristiti isti API.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 0,
+                number: 15,
+                text: "Dopunite: Angular, React i Knockout su primeri _______ framework-a.",
+                type: "fill",
+                answer: "frontend"
+            },
+            {
+                section: 0,
+                number: 16,
+                text: "Koja HTTP metoda se koristi za ažuriranje postojećih podataka:",
+                type: "multiple",
+                options: ["GET", "POST", "PUT", "OPTIONS"],
+                answer: "c"
+            },
+            {
+                section: 0,
+                number: 17,
+                text: "Napišite osnovnu strukturu REST API endpoint-a za upravljanje korisnicima:\n\n```\nGET    /api/_______ - dobijanje svih korisnika\nPOST   /api/_______ - kreiranje novog korisnika  \nPUT    /api/_______/{id} - ažuriranje korisnika\nDELETE /api/_______/{id} - brisanje korisnika\n```",
+                type: "fill",
+                answer: "users/users/users"
+            },
+            {
+                section: 0,
+                number: 18,
+                text: "Status kod 404 označava:",
+                type: "multiple",
+                options: ["OK", "Not Found", "Server Error", "Unauthorized"],
+                answer: "b"
+            },
+            {
+                section: 0,
+                number: 19,
+                text: "Objasnite zašto REST API treba da bude stateless (2-3 rečenice):",
+                type: "text",
+                answer: "Nema sesije, svaki zahtev je nezavisan"
+            },
+            {
+                section: 0,
+                number: 20,
+                text: "API endpoint `/api/users/5` vraća podatke o:",
+                type: "multiple",
+                options: ["svim korisnicima", "korisniku sa ID 5", "prvih 5 korisnika", "poslednji kreirani korisnik"],
+                answer: "b"
+            },
+
+            // Git i Verzioniranje (21-35)
+            {
+                section: 1,
+                number: 21,
+                text: "Dopunite komandu za kreiranje novog Git repozitorijuma:\n\n```bash\ngit _______\n```",
+                type: "fill",
+                answer: "init"
+            },
+            {
+                section: 1,
+                number: 22,
+                text: "Tri glavne sekcije Git projekta su:",
+                type: "multiple",
+                options: ["staging, working, committed", "local, remote, backup", "master, development, feature", "create, read, update"],
+                answer: "a"
+            },
+            {
+                section: 1,
+                number: 23,
+                text: "Dopunite Git workflow komande:\n\n```bash\ngit _______ filename.txt    # dodavanje u staging\ngit _______ -m \"poruka\"     # kreiranje commit-a\ngit _______ origin main     # slanje na remote\n```",
+                type: "fill",
+                answer: "add/commit/push"
+            },
+            {
+                section: 1,
+                number: 24,
+                text: "Tačno ili netačno: Git direktorijum sadrži sve metapodatke i bazu podataka za projekat.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 1,
+                number: 25,
+                text: "Objasnite razliku između `git fetch` i `git pull` komandi (2-3 rečenice):",
+                type: "text",
+                answer: "fetch samo preuzima, pull i spaja"
+            },
+            {
+                section: 1,
+                number: 26,
+                text: "Komanda za kreiranje i prebacivanje na novu granu je:\n\n```bash\ngit _______ -b nova-grana\n```",
+                type: "fill",
+                answer: "checkout"
+            },
+            {
+                section: 1,
+                number: 27,
+                text: "\"There are merge conflicts\" poruka označava da je potrebno _______ konflikte.",
+                type: "fill",
+                answer: "resolovati"
+            },
+            {
+                section: 1,
+                number: 28,
+                text: "Dopunite kod za rešavanje merge konflikta:\n\n```\n<<<<<<< HEAD\n// Naše izmene\nlet x = 10;\n=======\n// Njihove izmene  \nlet x = _______; \n>>>>>>> branch-name\n```",
+                type: "fill",
+                answer: "20"
+            },
+            {
+                section: 1,
+                number: 29,
+                text: "Objasnite kada nastaju merge konflikti (2-3 rečenice):",
+                type: "text",
+                answer: "Kada više programera menja iste linije"
+            },
+            {
+                section: 1,
+                number: 30,
+                text: "GitHub je primer:",
+                type: "multiple",
+                options: ["lokalnog repozitorijuma", "remote repozitorijuma", "staging area", "radnog direktorijuma"],
+                answer: "b"
+            },
+            {
+                section: 1,
+                number: 31,
+                text: "Komanda za kloniranje repozitorijuma:\n\n```bash\ngit _______ https://github.com/user/repo.git\n```",
+                type: "fill",
+                answer: "clone"
+            },
+            {
+                section: 1,
+                number: 32,
+                text: "Tačno ili netačno: `.gitignore` fajl određuje koje fajlove Git neće pratiti.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 1,
+                number: 33,
+                text: "Napišite `.gitignore` entry za ignorisanje svih `.log` fajlova:\n\n```\n_______\n```",
+                type: "fill",
+                answer: "*.log"
+            },
+            {
+                section: 1,
+                number: 34,
+                text: "Objasnite svrhu branching strategije u timu (2-3 rečenice):",
+                type: "text",
+                answer: "Omogućava paralelni rad na različitim funkcionalnostima"
+            },
+            {
+                section: 1,
+                number: 35,
+                text: "Komanda za spajanje grane u trenutnu granu:\n\n```bash\ngit _______ naziv-grane\n```",
+                type: "fill",
+                answer: "merge"
+            },
+
+            // ASP.NET Web API (36-60)
+            {
+                section: 2,
+                number: 36,
+                text: "Dopunite osnovnu strukturu Web API kontrolera:\n\n```csharp\n[Route(\"api/[controller]\")]\n[_______]\npublic class UsersController : _______\n{\n    // metode\n}\n```",
+                type: "fill",
+                answer: "ApiController/ControllerBase"
+            },
+            {
+                section: 2,
+                number: 37,
+                text: "Web API je idealna platforma za kreiranje _______ servisa.",
+                type: "multiple",
+                options: ["SOAP", "RESTful", "FTP", "SMTP"],
+                answer: "b"
+            },
+            {
+                section: 2,
+                number: 38,
+                text: "Tačno ili netačno: HTTP reči GET, POST, PUT, DELETE se mapiraju u C# metode.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 2,
+                number: 39,
+                text: "Dopunite GET metodu kontrolera:\n\n```csharp\n[HttpGet]\npublic ActionResult<List<User>> Get()\n{\n    return _______(users);\n}\n```",
+                type: "fill",
+                answer: "Ok"
+            },
+            {
+                section: 2,
+                number: 40,
+                text: "Objasnite ulogu [FromBody] atributa (2-3 rečenice):",
+                type: "text",
+                answer: "Označava da parametar dolazi iz tela zahteva"
+            },
+            {
+                section: 2,
+                number: 41,
+                text: "Dopunite POST metodu:\n\n```csharp\n[HttpPost]\npublic ActionResult<User> Post([_______] User user)\n{\n    _db.Users.Add(user);\n    _db._______();\n    return CreatedAtAction(nameof(Get), new { id = user.Id }, user);\n}\n```",
+                type: "fill",
+                answer: "FromBody/SaveChanges"
+            },
+            {
+                section: 2,
+                number: 42,
+                text: "Dependency Injection u ASP.NET Core se konfiguriše u:",
+                type: "multiple",
+                options: ["Startup.cs", "Program.cs", "appsettings.json", "web.config"],
+                answer: "b"
+            },
+            {
+                section: 2,
+                number: 43,
+                text: "Dopunite konfiguraciju servisa:\n\n```csharp\nbuilder.Services.AddDbContext<UserContext>(options =>\n    options._______(_______));\n```",
+                type: "fill",
+                answer: "UseSqlServer/connectionString"
+            },
+            {
+                section: 2,
+                number: 44,
+                text: "Status kod 200 znači:",
+                type: "multiple",
+                options: ["Not Found", "OK", "Internal Server Error", "Bad Request"],
+                answer: "b"
+            },
+            {
+                section: 2,
+                number: 45,
+                text: "Napišite Route atribut za GET metodu koja prima ID:\n\n```csharp\n[_______(\"{id}\")]\npublic ActionResult<User> GetById(int id)\n```",
+                type: "fill",
+                answer: "HttpGet"
+            },
+            {
+                section: 2,
+                number: 46,
+                text: "Objasnite zašto je bolje koristiti ActionResult umesto void u Web API metodama (2-3 rečenice):",
+                type: "text",
+                answer: "Omogućava vraćanje različitih HTTP odgovora"
+            },
+            {
+                section: 2,
+                number: 47,
+                text: "Tačno ili netačno: appsettings.json se koristi za čuvanje connection string-ova.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 2,
+                number: 48,
+                text: "Dopunite DELETE metodu:\n\n```csharp\n[HttpDelete(\"{id}\")]\npublic IActionResult Delete(int id)\n{\n    var user = _db.Users.Find(id);\n    if (user == null)\n        return _______();\n    \n    _db.Users._______(user);\n    _db.SaveChanges();\n    return _______();\n}\n```",
+                type: "fill",
+                answer: "NotFound/Remove/NoContent"
+            },
+            {
+                section: 2,
+                number: 49,
+                text: "Middleware se registruje pomoću:",
+                type: "multiple",
+                options: ["app.Use...()", "services.Add...()", "builder.Configure...()", "program.Run...()"],
+                answer: "a"
+            },
+            {
+                section: 2,
+                number: 50,
+                text: "Model binding automatski konvertuje:",
+                type: "multiple",
+                options: ["C# u JSON", "HTTP zahteve u C# objekte", "SQL u LINQ", "XML u JSON"],
+                answer: "b"
+            },
+            {
+                section: 2,
+                number: 51,
+                text: "Napišite CORS konfiguraciju:\n\n```csharp\nbuilder.Services.AddCors(options =>\n{\n    options.AddPolicy(\"AllowAll\", builder =>\n        builder._______().\n               _______().\n               _______());\n});\n```",
+                type: "fill",
+                answer: "AllowAnyOrigin/AllowAnyMethod/AllowAnyHeader"
+            },
+            {
+                section: 2,
+                number: 52,
+                text: "Objasnite šta je Model Validation u Web API (2-3 rečenice):",
+                type: "text",
+                answer: "Proverava validnost podataka pre obrade"
+            },
+            {
+                section: 2,
+                number: 53,
+                text: "[Required] atribut označava da je polje:",
+                type: "multiple",
+                options: ["opciono", "obavezno", "jedinstveno", "skriveno"],
+                answer: "b"
+            },
+            {
+                section: 2,
+                number: 54,
+                text: "Dopunite Exception Handling middleware:\n\n```csharp\napp.UseExceptionHandler(appError =>\n{\n    appError.Run(async context =>\n    {\n        context.Response.StatusCode = _______;\n        await context.Response.WriteAsync(\"Internal Server Error\");\n    });\n});\n```",
+                type: "fill",
+                answer: "500"
+            },
+            {
+                section: 2,
+                number: 55,
+                text: "Objasnite prednosti korišćenja DTO (Data Transfer Object) pattern-a (2-3 rečenice):",
+                type: "text",
+                answer: "Razdvaja poslovnu logiku od transporta"
+            },
+            {
+                section: 2,
+                number: 56,
+                text: "AutoMapper se koristi za:",
+                type: "multiple",
+                options: ["automatsko mapiranje baze", "mapiranje između objekata", "kreiranje API dokumentacije", "testiranje API-ja"],
+                answer: "b"
+            },
+            {
+                section: 2,
+                number: 57,
+                text: "Swagger UI omogućava:",
+                type: "multiple",
+                options: ["debug aplikacije", "testiranje API endpoint-ova", "monitoring performansi", "backup baze podataka"],
+                answer: "b"
+            },
+            {
+                section: 2,
+                number: 58,
+                text: "Tačno ili netačno: Kontroler može imati više konstruktora.",
+                type: "boolean",
+                answer: "Netačno"
+            },
+            {
+                section: 2,
+                number: 59,
+                text: "Napišite jednostavan Health Check endpoint:\n\n```csharp\n[HttpGet(\"health\")]\npublic IActionResult Health()\n{\n    return _______(\"API is running\");\n}\n```",
+                type: "fill",
+                answer: "Ok"
+            },
+            {
+                section: 2,
+                number: 60,
+                text: "Objasnite kada koristiti IActionResult vs ActionResult<T> (2-3 rečenice):",
+                type: "text",
+                answer: "IActionResult za različite tipove, ActionResult<T> za specifične"
+            },
+
+            // Entity Framework i Async Programming (61-85)
+            {
+                section: 3,
+                number: 61,
+                text: "Entity Framework Core je _______ alat.",
+                type: "multiple",
+                options: ["ORM", "HTTP", "UI", "Testing"],
+                answer: "a"
+            },
+            {
+                section: 3,
+                number: 62,
+                text: "Dopunite DbContext klasu:\n\n```csharp\npublic class UserContext : _______\n{\n    public DbSet<User> _______ { get; set; }\n    \n    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)\n    {\n        optionsBuilder._______(_______);\n    }\n}\n```",
+                type: "fill",
+                answer: "DbContext/Users/UseSqlServer/connectionString"
+            },
+            {
+                section: 3,
+                number: 63,
+                text: "Connection string se konfiguriše u _______ fajlu.",
+                type: "fill",
+                answer: "appsettings.json"
+            },
+            {
+                section: 3,
+                number: 64,
+                text: "Objasnite šta su migracije u Entity Framework (2-3 rečenice):",
+                type: "text",
+                answer: "Omogućavaju evoluciju šeme baze kroz vreme"
+            },
+            {
+                section: 3,
+                number: 65,
+                text: "Dopunite komande za migracije:\n\n```bash\ndotnet ef migrations add _______\ndotnet ef database _______\n```",
+                type: "fill",
+                answer: "InitialMigration/update"
+            },
+            {
+                section: 3,
+                number: 66,
+                text: "Tačno ili netačno: Code-First pristup kreira bazu na osnovu C# klasa.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 3,
+                number: 67,
+                text: "Napišite osnovnu User model klasu:\n\n```csharp\npublic class User\n{\n    public int _______ { get; set; }\n    [_______]\n    public string Name { get; set; }\n    public string _______ { get; set; }\n}\n```",
+                type: "fill",
+                answer: "Id/Required/Email"
+            },
+            {
+                section: 3,
+                number: 68,
+                text: "Async metode vraćaju:",
+                type: "multiple",
+                options: ["void", "Task ili Task<T>", "string", "object"],
+                answer: "b"
+            },
+            {
+                section: 3,
+                number: 69,
+                text: "Dopunite async GET metodu:\n\n```csharp\npublic async Task<ActionResult<List<User>>> GetUsersAsync()\n{\n    var users = await _context.Users._______();\n    return _______(users);\n}\n```",
+                type: "fill",
+                answer: "ToListAsync/Ok"
+            },
+            {
+                section: 3,
+                number: 70,
+                text: "Objasnite prednosti async/await programiranja (2-3 rečenice):",
+                type: "text",
+                answer: "Ne blokira thread, bolje performanse"
+            },
+            {
+                section: 3,
+                number: 71,
+                text: "`await` ključna reč se može koristiti samo u _______ metodama.",
+                type: "fill",
+                answer: "async"
+            },
+            {
+                section: 3,
+                number: 72,
+                text: "Dopunite async POST metodu:\n\n```csharp\npublic async Task<ActionResult<User>> PostAsync([FromBody] User user)\n{\n    _context.Users._______(user);\n    await _context._______();\n    return CreatedAtAction(nameof(Get), new { id = user.Id }, user);\n}\n```",
+                type: "fill",
+                answer: "Add/SaveChangesAsync"
+            },
+            {
+                section: 3,
+                number: 73,
+                text: "Tačno ili netačno: Async metode se izvršavaju na background thread-u.",
+                type: "boolean",
+                answer: "Netačno"
+            },
+            {
+                section: 3,
+                number: 74,
+                text: "Entity Framework relacione veze se definišu pomoću:",
+                type: "multiple",
+                options: ["Foreign Key atributa", "Navigation properties", "Fluent API", "sve navedeno"],
+                answer: "d"
+            },
+            {
+                section: 3,
+                number: 75,
+                text: "Dopunite One-to-Many vezu:\n\n```csharp\npublic class Order\n{\n    public int Id { get; set; }\n    public int _______ { get; set; }\n    public User _______ { get; set; }\n}\n\npublic class User  \n{\n    public int Id { get; set; }\n    public List<Order> _______ { get; set; }\n}\n```",
+                type: "fill",
+                answer: "UserId/User/Orders"
+            },
+            {
+                section: 3,
+                number: 76,
+                text: "Objasnite razliku između .Include() i .Load() metoda (2-3 rečenice):",
+                type: "text",
+                answer: "Include učitava odmah, Load odlaže učitavanje"
+            },
+            {
+                section: 3,
+                number: 77,
+                text: "LINQ query se izvršava kada se pozove:",
+                type: "multiple",
+                options: ["ToList()", "Where()", "Select()", "OrderBy()"],
+                answer: "a"
+            },
+            {
+                section: 3,
+                number: 78,
+                text: "Dopunite LINQ upit:\n\n```csharp\nvar activeUsers = await _context.Users\n    ._______(u => u.IsActive)\n    ._______(u => u.Name)\n    ._______();\n```",
+                type: "fill",
+                answer: "Where/OrderBy/ToListAsync"
+            },
+            {
+                section: 3,
+                number: 79,
+                text: "Tačno ili netačno: Entity Framework automatski prati izmene na objektima.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 3,
+                number: 80,
+                text: "Change Tracking omogućava:",
+                type: "multiple",
+                options: ["debug aplikacije", "praćenje izmena na entitetima", "backup baze", "optimizaciju upita"],
+                answer: "b"
+            },
+            {
+                section: 3,
+                number: 81,
+                text: "Napišite kod za soft delete:\n\n```csharp\npublic async Task<IActionResult> SoftDelete(int id)\n{\n    var user = await _context.Users.FindAsync(id);\n    user._______ = true;\n    await _context._______();\n    return _______();\n}\n```",
+                type: "fill",
+                answer: "IsDeleted/SaveChangesAsync/NoContent"
+            },
+            {
+                section: 3,
+                number: 82,
+                text: "Objasnite šta je Database-First pristup (2-3 rečenice):",
+                type: "text",
+                answer: "Generisanje modela iz postojeće baze"
+            },
+            {
+                section: 3,
+                number: 83,
+                text: "Transaction u Entity Framework se koristi za:",
+                type: "multiple",
+                options: ["poboljšanje performansi", "osiguravanje konzistentnosti", "backup podataka", "monitoring"],
+                answer: "b"
+            },
+            {
+                section: 3,
+                number: 84,
+                text: "Dopunite transaction kod:\n\n```csharp\nusing var transaction = _context.Database._______();\ntry\n{\n    // operacije\n    await transaction._______();\n}\ncatch\n{\n    await transaction._______();\n    throw;\n}\n```",
+                type: "fill",
+                answer: "BeginTransaction/CommitAsync/RollbackAsync"
+            },
+            {
+                section: 3,
+                number: 85,
+                text: "Lazy Loading omogućava:",
+                type: "multiple",
+                options: ["brže učitavanje aplikacije", "automatsko učitavanje povezanih podataka", "keširanje upita", "optimizaciju memorije"],
+                answer: "b"
+            },
+
+            // Angular Osnove (86-110)
+            {
+                section: 4,
+                number: 86,
+                text: "Angular je _______ framework za SPA aplikacije.",
+                type: "multiple",
+                options: ["backend", "frontend", "database", "testing"],
+                answer: "b"
+            },
+            {
+                section: 4,
+                number: 87,
+                text: "Dopunite Angular instalaciju:\n\n```bash\nnpm install -g _______\nng _______ my-app\ncd my-app\nng _______\n```",
+                type: "fill",
+                answer: "@angular/cli/new/serve"
+            },
+            {
+                section: 4,
+                number: 88,
+                text: "Tačno ili netačno: Angular koristi TypeScript kao primarni jezik.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 4,
+                number: 89,
+                text: "Dopunite osnovnu komponentu:\n\n```typescript\nimport { Component } from '@angular/core';\n\n@_______({ \n  selector: 'app-user',\n  _______: './user.component.html',\n  _______: ['./user.component.css']\n})\nexport class UserComponent {\n  userName: _______ = 'Marko';\n}\n```",
+                type: "fill",
+                answer: "Component/templateUrl/styleUrls/string"
+            },
+            {
+                section: 4,
+                number: 90,
+                text: "Objasnite šta je data binding u Angular-u (2-3 rečenice):",
+                type: "text",
+                answer: "Povezuje podatke modela sa prikazom"
+            },
+            {
+                section: 4,
+                number: 91,
+                text: "Interpolacija se označava sa:",
+                type: "multiple",
+                options: ["[]", "()", "{{}}", "**"],
+                answer: "c"
+            },
+            {
+                section: 4,
+                number: 92,
+                text: "Dopunite template sa interpolacijom:\n\n```html\n<h1>Dobrodošli, _______!</h1>\n<p>Broj korisnika: _______</p>\n```",
+                type: "fill",
+                answer: "{{userName}}/{{userCount}}"
+            },
+            {
+                section: 4,
+                number: 93,
+                text: "Property binding se koristi za:",
+                type: "multiple",
+                options: ["pozivanje metoda", "vezivanje svojstava elemenata", "iteraciju kroz nizove", "uslovni prikaz"],
+                answer: "b"
+            },
+            {
+                section: 4,
+                number: 94,
+                text: "Dopunite property binding:\n\n```html\n<img [_______]=\"imageUrl\" [_______]=\"imageAlt\">\n<button [_______]=\"isDisabled\">Klikni</button>\n```",
+                type: "fill",
+                answer: "src/alt/disabled"
+            },
+            {
+                section: 4,
+                number: 95,
+                text: "Event binding omogućava:",
+                type: "multiple",
+                options: ["prikaz podataka", "reagovanje na korisničke akcije", "stilizovanje komponenti", "rutiranje"],
+                answer: "b"
+            },
+            {
+                section: 4,
+                number: 96,
+                text: "Napišite event binding za click:\n\n```html\n<button (_______)=\"_______()\" >Save</button>\n```",
+                type: "fill",
+                answer: "click/saveUser"
+            },
+            {
+                section: 4,
+                number: 97,
+                text: "Objasnite *ngIf direktivu sa primerom (2-3 rečenice):",
+                type: "text",
+                answer: "Uslovni prikaz elemenata u template-u"
+            },
+            {
+                section: 4,
+                number: 98,
+                text: "Dopunite strukturalne direktive:\n\n```html\n<div *_______=\"isLoggedIn\">\n  Dobrodošli!\n</div>\n\n<ul>\n  <li *_______=\"let user of users\">\n    {{user.name}}\n  </li>\n</ul>\n```",
+                type: "fill",
+                answer: "ngIf/ngFor"
+            },
+            {
+                section: 4,
+                number: 99,
+                text: "Tačno ili netačno: Angular automatski detektuje izmene podataka.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 4,
+                number: 100,
+                text: "Two-way data binding se implementira sa:",
+                type: "multiple",
+                options: ["{{}}", "[]", "()", "[()]"],
+                answer: "d"
+            },
+            {
+                section: 4,
+                number: 101,
+                text: "Dopunite two-way binding:\n\n```html\n<input [(_______)]=\"userName\" type=\"text\">\n<p>Uneto ime: {{_______}}</p>\n```",
+                type: "fill",
+                answer: "ngModel/userName"
+            },
+            {
+                section: 4,
+                number: 102,
+                text: "Angular servisi se kreiraju sa:\n\n```bash\nng generate _______ user-service\n```",
+                type: "fill",
+                answer: "service"
+            },
+            {
+                section: 4,
+                number: 103,
+                text: "Objasnite Dependency Injection u Angular-u (2-3 rečenice):",
+                type: "text",
+                answer: "Omogućava ubrizgavanje zavisnosti u komponente"
+            },
+            {
+                section: 4,
+                number: 104,
+                text: "Dopunite servis:\n\n```typescript\nimport { Injectable } from '@angular/core';\n\n@_______()  \nexport class UserService {\n  private users: User[] = [];\n  \n  getUsers(): _______ {\n    return this.users;\n  }\n}\n```",
+                type: "fill",
+                answer: "Injectable/User[]"
+            },
+            {
+                section: 4,
+                number: 105,
+                text: "HttpClient se koristi za:",
+                type: "multiple",
+                options: ["rutiranje", "HTTP zahteve", "validaciju", "stilizovanje"],
+                answer: "b"
+            },
+            {
+                section: 4,
+                number: 106,
+                text: "Dopunite HTTP GET zahtev:\n\n```typescript\nimport { HttpClient } from '@angular/common/http';\n\nconstructor(private http: _______) {}\n\ngetUsers() {\n  return this.http._______<User[]>('/api/users');\n}\n```",
+                type: "fill",
+                answer: "HttpClient/get"
+            },
+            {
+                section: 4,
+                number: 107,
+                text: "Observable se koristi za:",
+                type: "multiple",
+                options: ["sinhrone operacije", "asinhrone operacije", "validaciju", "stilizovanje"],
+                answer: "b"
+            },
+            {
+                section: 4,
+                number: 108,
+                text: "Tačno ili netačno: Angular komponente imaju životni ciklus.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 4,
+                number: 109,
+                text: "ngOnInit se koristi za:",
+                type: "multiple",
+                options: ["kreiranje komponente", "inicijalizaciju komponente", "brisanje komponente", "stilizovanje"],
+                answer: "b"
+            },
+            {
+                section: 4,
+                number: 110,
+                text: "Dopunite lifecycle hook:\n\n```typescript\nexport class UserComponent implements _______ {\n  _______() {\n    // inicijalizacija\n  }\n}\n```",
+                type: "fill",
+                answer: "OnInit/ngOnInit"
+            },
+
+            // Docker i Mikroservisi (111-135)
+            {
+                section: 5,
+                number: 111,
+                text: "Dopunite osnovni Dockerfile:\n\n```dockerfile\n_______ mcr.microsoft.com/dotnet/aspnet:8.0\n_______ /app\n_______ [\"app.dll\", \"./\"]\n_______ 80\n_______ [\"dotnet\", \"app.dll\"]\n```",
+                type: "fill",
+                answer: "FROM/WORKDIR/COPY/EXPOSE/ENTRYPOINT"
+            },
+            {
+                section: 5,
+                number: 112,
+                text: "Docker kontejneri su:",
+                type: "multiple",
+                options: ["virtuelne mašine", "lagane, prenosive jedinice", "baze podataka", "web serveri"],
+                answer: "b"
+            },
+            {
+                section: 5,
+                number: 113,
+                text: "Objasnite prednosti Docker kontejnera (2-3 rečenice):",
+                type: "text",
+                answer: "Izolacija, prenosivost, konzistentnost okruženja"
+            },
+            {
+                section: 5,
+                number: 114,
+                text: "Multi-stage build omogućava:\n\n```dockerfile\nFROM mcr.microsoft.com/dotnet/sdk:8.0 AS _______\n# build faza\n\nFROM mcr.microsoft.com/dotnet/aspnet:8.0 AS _______  \n# runtime faza\n```",
+                type: "fill",
+                answer: "build/final"
+            },
+            {
+                section: 5,
+                number: 115,
+                text: "Docker Compose se koristi za upravljanje _______ kontejnera.",
+                type: "fill",
+                answer: "više"
+            },
+            {
+                section: 5,
+                number: 116,
+                text: "Dopunite docker-compose.yml:\n\n```yaml\nversion: '3.4'\nservices:\n  userservice:\n    _______: ./UserService\n    _______:\n      - \"5000:8080\"\n  \n  orderservice:\n    build: ./OrderService\n    ports:\n      - \"_______:8080\"\n    _______:\n      - userservice\n```",
+                type: "fill",
+                answer: "build/ports/5001/depends_on"
+            },
+            {
+                section: 5,
+                number: 117,
+                text: "Tačno ili netačno: Svaki mikroservis treba svoj Dockerfile.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 5,
+                number: 118,
+                text: "Docker volumes se koriste za:",
+                type: "multiple",
+                options: ["networking", "perzistentno čuvanje podataka", "load balancing", "monitoring"],
+                answer: "b"
+            },
+            {
+                section: 5,
+                number: 119,
+                text: "Objasnite mikroservisnu arhitekturu (2-3 rečenice):",
+                type: "text",
+                answer: "Skup malih, nezavisnih servisa"
+            },
+            {
+                section: 5,
+                number: 120,
+                text: "API Gateway služi kao:",
+                type: "multiple",
+                options: ["backup sistem", "jedinstvena ulazna tačka", "baza podataka", "monitoring alat"],
+                answer: "b"
+            },
+            {
+                section: 5,
+                number: 121,
+                text: "Dopunite Ocelot konfiguraciju:\n\n```json\n{\n  \"Routes\": [\n    {\n      \"DownstreamPathTemplate\": \"/api/Users\",\n      \"DownstreamHostAndPorts\": [{ \"Host\": \"_______\", \"Port\": 8080 }],\n      \"UpstreamPathTemplate\": \"/Users\",\n      \"UpstreamHttpMethod\": [ \"GET\", \"POST\", \"PUT\", \"DELETE\" ]\n    }\n  ]\n}\n```",
+                type: "fill",
+                answer: "userservice"
+            },
+            {
+                section: 5,
+                number: 122,
+                text: "HttpClient se registruje u Program.cs:\n\n```csharp\nbuilder.Services._______();\n```",
+                type: "fill",
+                answer: "AddHttpClient"
+            },
+            {
+                section: 5,
+                number: 123,
+                text: "Komunikacija između mikroservisa se ostvaruje preko:",
+                type: "multiple",
+                options: ["shared database", "HTTP poziva", "file sistema", "memorije"],
+                answer: "b"
+            },
+            {
+                section: 5,
+                number: 124,
+                text: "Dopunite HTTP poziv između servisa:\n\n```csharp\nvar user = await _http._______<User>($\"http://userservice:8080/api/Users/{userId}\");\nif (user == null)\n    return _______(\"User not found\");\n```",
+                type: "fill",
+                answer: "GetFromJsonAsync/BadRequest"
+            },
+            {
+                section: 5,
+                number: 125,
+                text: "Objasnite zašto svaki mikroservis treba svoju bazu (2-3 rečenice):",
+                type: "text",
+                answer: "Nezavisnost, izbegavanje shared database anti-pattern"
+            },
+            {
+                section: 5,
+                number: 126,
+                text: "Load balancing se koristi za:",
+                type: "multiple",
+                options: ["backup podataka", "distribuciju saobraćaja", "monitoring", "sigurnost"],
+                answer: "b"
+            },
+            {
+                section: 5,
+                number: 127,
+                text: "Circuit Breaker pattern se koristi za:",
+                type: "multiple",
+                options: ["sigurnost", "otpornost na greške", "performanse", "monitoring"],
+                answer: "b"
+            },
+            {
+                section: 5,
+                number: 128,
+                text: "Tačno ili netačno: Mikroservisi mogu biti napisani u različitim tehnologijama.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 5,
+                number: 129,
+                text: "Service Discovery omogućava:",
+                type: "multiple",
+                options: ["backup servisa", "pronalaženje servisa u mreži", "monitoring", "sigurnost"],
+                answer: "b"
+            },
+            {
+                section: 5,
+                number: 130,
+                text: "Dopunite Docker komande:\n\n```bash\ndocker _______ up -d          # pokretanje\ndocker _______ ps             # lista kontejnera  \ndocker _______ down           # zaustavljanje\n```",
+                type: "fill",
+                answer: "compose/docker/compose"
+            },
+            {
+                section: 5,
+                number: 131,
+                text: "Redis se koristi za:",
+                type: "multiple",
+                options: ["bazu podataka", "keširanje", "web server", "monitoring"],
+                answer: "b"
+            },
+            {
+                section: 5,
+                number: 132,
+                text: "Distributed cache omogućava:",
+                type: "multiple",
+                options: ["lokalno keširanje", "keširanje između više servisa", "backup podataka", "monitoring"],
+                answer: "b"
+            },
+            {
+                section: 5,
+                number: 133,
+                text: "Objasnite Event-Driven arhitekturu (2-3 rečenice):",
+                type: "text",
+                answer: "Povezuje događaje za asinhronu komunikaciju"
+            },
+            {
+                section: 5,
+                number: 134,
+                text: "Message broker se koristi za:",
+                type: "multiple",
+                options: ["HTTP komunikaciju", "asinhronu komunikaciju", "keširanje", "monitoring"],
+                answer: "b"
+            },
+            {
+                section: 5,
+                number: 135,
+                text: "Container orchestration omogućava:",
+                type: "multiple",
+                options: ["kreiranje kontejnera", "upravljanje velikim brojem kontejnera", "backup", "monitoring"],
+                answer: "b"
+            },
+
+            // Redis i Keširanje (136-150)
+            {
+                section: 6,
+                number: 136,
+                text: "Redis je _______ sistem za keširanje.",
+                type: "multiple",
+                options: ["disk-based", "in-memory", "cloud-based", "file-based"],
+                answer: "b"
+            },
+            {
+                section: 6,
+                number: 137,
+                text: "Dopunite Redis konfiguraciju:\n\n```csharp\nbuilder.Services.AddStackExchangeRedisCache(options =>\n{\n    options._______ = builder.Configuration.GetConnectionString(\"Redis\");\n    options._______ = \"UserService_\";\n});\n```",
+                type: "fill",
+                answer: "Configuration/InstanceName"
+            },
+            {
+                section: 6,
+                number: 138,
+                text: "IDistributedCache interfejs omogućava:",
+                type: "multiple",
+                options: ["lokalno keširanje", "distribuirano keširanje", "backup podataka", "monitoring"],
+                answer: "b"
+            },
+            {
+                section: 6,
+                number: 139,
+                text: "Objasnite prednosti Redis keširanja (2-3 rečenice):",
+                type: "text",
+                answer: "Brže izvršavanje, smanjeno opterećenje baze"
+            },
+            {
+                section: 6,
+                number: 140,
+                text: "Dopunite keširanje podataka:\n\n```csharp\nstring cacheKey = $\"user_{id}\";\nstring cachedUser = await _cache._______Async(cacheKey);\n\nif (!string.IsNullOrEmpty(cachedUser))\n{\n    return Ok(JsonSerializer._______<User>(cachedUser));\n}\n\n// dobijanje iz baze\nvar user = await _context.Users.FindAsync(id);\n\nawait _cache._______Async(\n    cacheKey,\n    JsonSerializer._______(user),\n    TimeSpan.FromMinutes(10)\n);\n```",
+                type: "fill",
+                answer: "GetString/Deserialize/SetStringAsync/Serialize"
+            },
+            {
+                section: 6,
+                number: 141,
+                text: "Cache expiration može biti:",
+                type: "multiple",
+                options: ["absolute", "sliding", "never", "sve navedeno"],
+                answer: "d"
+            },
+            {
+                section: 6,
+                number: 142,
+                text: "Tačno ili netačno: Redis podržava različite tipove podataka.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 6,
+                number: 143,
+                text: "Redis u Docker Compose:\n\n```yaml\nredis:\n  image: _______:latest\n  ports:\n    - \"_______:6379\"\n  volumes:\n    - redisdata:/data\n```",
+                type: "fill",
+                answer: "redis/6379"
+            },
+            {
+                section: 6,
+                number: 144,
+                text: "Cache-aside pattern znači:",
+                type: "multiple",
+                options: ["automatsko keširanje", "ručno upravljanje kešom", "nema keširanja", "backup keša"],
+                answer: "b"
+            },
+            {
+                section: 6,
+                number: 145,
+                text: "Objasnite cache invalidation problem (2-3 rečenice):",
+                type: "text",
+                answer: "Podaci u kešu mogu postati zastareli"
+            },
+            {
+                section: 6,
+                number: 146,
+                text: "Redis CLI komanda za pregled ključeva:\n\n```bash\nredis-cli _______\n```",
+                type: "fill",
+                answer: "KEYS *"
+            },
+            {
+                section: 6,
+                number: 147,
+                text: "Cache hit ratio označava:",
+                type: "multiple",
+                options: ["brzinu keša", "procenat pronađenih podataka u kešu", "veličinu keša", "broj korisnika"],
+                answer: "b"
+            },
+            {
+                section: 6,
+                number: 148,
+                text: "Tačno ili netačno: Redis može biti korišćen kao message broker.",
+                type: "boolean",
+                answer: "Tačno"
+            },
+            {
+                section: 6,
+                number: 149,
+                text: "Write-through cache strategy znači:",
+                type: "multiple",
+                options: ["piše se samo u keš", "piše se istovremeno u keš i bazu", "piše se samo u bazu", "nema pisanja"],
+                answer: "b"
+            },
+            {
+                section: 6,
+                number: 150,
+                text: "Objasnite kada ne treba koristiti keširanje (2-3 rečenice):",
+                type: "text",
+                answer: "Kada se podaci često menjaju ili su kritični za konzistentnost"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let currentSection = 'all';
+        let userAnswers = {};
+        let filteredQuestions = [];
+        let isReviewMode = false;
+
+        function initQuiz() {
+            filterQuestions();
+            showQuestion();
+            updateProgress();
+        }
+
+        function filterQuestions() {
+            if (currentSection === 'all') {
+                filteredQuestions = questions;
+            } else {
+                filteredQuestions = questions.filter(q => q.section == currentSection);
+            }
+            currentQuestionIndex = 0;
+        }
+
+        function showQuestion() {
+            if (filteredQuestions.length === 0) return;
+
+            const question = filteredQuestions[currentQuestionIndex];
+            const sectionNames = ['REST Arhitektura', 'Git i Verzioniranje', 'ASP.NET Web API', 'Entity Framework', 'Angular Osnove', 'Docker i Mikroservisi', 'Redis i Keširanje'];
+            
+            let questionHTML = `
+                <div class="question-container">
+                    <div class="question-header">
+                        <div class="question-number">Pitanje ${question.number}</div>
+                        <div class="question-section">${sectionNames[question.section]}</div>
+                    </div>
+                    <div class="question-text">${formatQuestionText(question.text)}</div>
+                    ${renderAnswerInput(question)}
+                </div>
+            `;
+
+            document.getElementById('quizContent').innerHTML = questionHTML;
+            loadUserAnswer(question);
+            
+            if (isReviewMode) {
+                showAnswerResults(question);
+            }
+            
+            updateNavigationButtons();
+            updateProgress();
+        }
+
+        function formatQuestionText(text) {
+            // Convert code blocks
+            text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, '<div class="code-block">$2</div>');
+            
+            // Convert inline code
+            text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
+            // Convert line breaks
+            text = text.replace(/\n/g, '<br>');
+            
+            return text;
+        }
+
+        function renderAnswerInput(question) {
+            const questionKey = `q${question.number}`;
+            
+            switch (question.type) {
+                case 'multiple':
+                    return `
+                        <div class="options">
+                            ${question.options.map((option, index) => `
+                                <div class="option" onclick="${!isReviewMode ? `selectOption(${index}, '${questionKey}')` : ''}" ${isReviewMode ? 'style="cursor: default;"' : ''}>
+                                    <input type="radio" name="${questionKey}" value="${String.fromCharCode(97 + index)}" ${userAnswers[questionKey] === String.fromCharCode(97 + index) ? 'checked' : ''} ${isReviewMode ? 'disabled' : ''}>
+                                    <span>${String.fromCharCode(97 + index)}) ${option}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                
+                case 'boolean':
+                    return `
+                        <div class="options">
+                            <div class="option" onclick="${!isReviewMode ? `selectOption('true', '${questionKey}')` : ''}" ${isReviewMode ? 'style="cursor: default;"' : ''}>
+                                <input type="radio" name="${questionKey}" value="Tačno" ${userAnswers[questionKey] === 'Tačno' ? 'checked' : ''} ${isReviewMode ? 'disabled' : ''}>
+                                <span>Tačno</span>
+                            </div>
+                            <div class="option" onclick="${!isReviewMode ? `selectOption('false', '${questionKey}')` : ''}" ${isReviewMode ? 'style="cursor: default;"' : ''}>
+                                <input type="radio" name="${questionKey}" value="Netačno" ${userAnswers[questionKey] === 'Netačno' ? 'checked' : ''} ${isReviewMode ? 'disabled' : ''}>
+                                <span>Netačno</span>
+                            </div>
+                        </div>
+                    `;
+                
+                case 'fill':
+                    const hasMultipleAnswers = question.answer.includes('/');
+                    const fillPlaceholder = hasMultipleAnswers ? 
+                        "Unesite odgovor(e) odvojene sa / (npr: odgovor1/odgovor2/odgovor3)" :
+                        "Unesite odgovor...";
+                    
+                    const fillInput = `<input type="text" class="text-input" placeholder="${fillPlaceholder}" value="${userAnswers[questionKey] || ''}" onchange="saveTextAnswer('${questionKey}', this.value)" ${isReviewMode ? 'readonly' : ''}>`;
+                    
+                    let result = fillInput;
+                    if (hasMultipleAnswers && !isReviewMode) {
+                        result += `
+                            <div style="margin-top: 8px; font-size: 13px; color: #666; font-style: italic;">
+                                💡 Tip: Ovo pitanje ima više delova odgovora - koristite / između odgovora
+                            </div>
+                        `;
+                    }
+                    return result;
+                
+                case 'text':
+                    return `<textarea class="textarea-input" placeholder="Unesite vaš odgovor u 2-3 rečenice..." onchange="saveTextAnswer('${questionKey}', this.value)" ${isReviewMode ? 'readonly' : ''}>${userAnswers[questionKey] || ''}</textarea>`;
+                
+                default:
+                    return '<p>Tip pitanja nije podržan.</p>';
+            }
+        }
+
+        function showAnswerResults(question) {
+            const questionKey = `q${question.number}`;
+            const userAnswer = userAnswers[questionKey];
+            const correctAnswer = question.answer;
+            
+            if (question.type === 'multiple' || question.type === 'boolean') {
+                // Handle multiple choice and boolean questions
+                const options = document.querySelectorAll('.option');
+                
+                options.forEach((option, index) => {
+                    const input = option.querySelector('input');
+                    const inputValue = input.value;
+                    
+                    // Remove previous classes
+                    option.classList.remove('correct', 'incorrect', 'user-incorrect');
+                    
+                    // Remove previous indicators
+                    const existingIndicator = option.querySelector('.answer-indicator');
+                    if (existingIndicator) {
+                        existingIndicator.remove();
+                    }
+                    
+                    let isCorrectOption = false;
+                    let isUserChoice = false;
+                    
+                    if (question.type === 'multiple') {
+                        isCorrectOption = String.fromCharCode(97 + index) === correctAnswer;
+                        isUserChoice = userAnswer === String.fromCharCode(97 + index);
+                    } else { // boolean
+                        isCorrectOption = inputValue === correctAnswer;
+                        isUserChoice = userAnswer === inputValue;
+                    }
+                    
+                    // Add appropriate styling and indicators
+                    if (isCorrectOption) {
+                        option.classList.add('correct');
+                        const indicator = document.createElement('span');
+                        indicator.className = 'answer-indicator correct';
+                        option.appendChild(indicator);
+                    }
+                    
+                    if (isUserChoice && !isCorrectOption) {
+                        option.classList.add('user-incorrect');
+                        const indicator = document.createElement('span');
+                        indicator.className = 'answer-indicator user-choice';
+                        option.appendChild(indicator);
+                    }
+                });
+                
+            } else if (question.type === 'fill' || question.type === 'text') {
+                // Handle text and fill questions
+                const input = document.querySelector('.text-input, .textarea-input');
+                if (input) {
+                    const isCorrect = isAnswerCorrect(userAnswer, correctAnswer);
+                    const isPartiallyCorrect = userAnswer && !isCorrect && question.type === 'text';
+                    
+                    // Remove previous classes
+                    input.classList.remove('correct', 'incorrect', 'partial');
+                    
+                    // Remove previous correct answer display
+                    const existingDisplay = document.querySelector('.correct-answer-display');
+                    if (existingDisplay) {
+                        existingDisplay.remove();
+                    }
+                    
+                    if (isCorrect) {
+                        input.classList.add('correct');
+                    } else if (isPartiallyCorrect) {
+                        input.classList.add('partial');
+                    } else if (userAnswer) {
+                        input.classList.add('incorrect');
+                    }
+                    
+                    // Show correct answer
+                    const correctAnswerDiv = document.createElement('div');
+                    correctAnswerDiv.className = 'correct-answer-display';
+                    correctAnswerDiv.innerHTML = `<strong>Tačan odgovor:</strong> ${correctAnswer}`;
+                    input.parentNode.appendChild(correctAnswerDiv);
+                }
+            }
+        }
+
+        function selectOption(value, questionKey) {
+            if (isReviewMode) return; // Don't allow changes in review mode
+            
+            if (typeof value === 'number') {
+                // Multiple choice - convert index to letter
+                value = String.fromCharCode(97 + value);
+            } else if (value === 'true') {
+                value = 'Tačno';
+            } else if (value === 'false') {
+                value = 'Netačno';
+            }
+            
+            userAnswers[questionKey] = value;
+            
+            // Update radio buttons
+            const radios = document.querySelectorAll(`input[name="${questionKey}"]`);
+            radios.forEach(radio => {
+                radio.checked = radio.value === value;
+                radio.closest('.option').classList.toggle('selected', radio.checked);
+            });
+        }
+
+        function saveTextAnswer(questionKey, value) {
+            if (isReviewMode) return; // Don't allow changes in review mode
+            userAnswers[questionKey] = value;
+        }
+
+        function loadUserAnswer(question) {
+            const questionKey = `q${question.number}`;
+            const answer = userAnswers[questionKey];
+            
+            if (answer) {
+                if (question.type === 'multiple' || question.type === 'boolean') {
+                    const radio = document.querySelector(`input[name="${questionKey}"][value="${answer}"]`);
+                    if (radio) {
+                        radio.checked = true;
+                        if (!isReviewMode) {
+                            radio.closest('.option').classList.add('selected');
+                        }
+                    }
+                }
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < filteredQuestions.length - 1) {
+                currentQuestionIndex++;
+                showQuestion();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                showQuestion();
+            }
+        }
+
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            prevBtn.disabled = currentQuestionIndex === 0;
+            nextBtn.disabled = currentQuestionIndex === filteredQuestions.length - 1;
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestionIndex + 1) / filteredQuestions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = `${currentQuestionIndex + 1} / ${filteredQuestions.length}`;
+        }
+
+        function showResults() {
+            calculateResults();
+            document.getElementById('quizContent').classList.add('hidden');
+            document.querySelector('.navigation-buttons').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.remove('hidden');
+            document.getElementById('reviewModeIndicator').classList.add('hidden');
+            isReviewMode = false;
+        }
+
+        function calculateResults() {
+            let totalCorrect = 0;
+            let totalAnswered = 0;
+            let sectionResults = {};
+            
+            // Initialize section results
+            const sectionNames = ['REST Arhitektura', 'Git i Verzioniranje', 'ASP.NET Web API', 'Entity Framework', 'Angular Osnove', 'Docker i Mikroservisi', 'Redis i Keširanje'];
+            sectionNames.forEach((name, index) => {
+                sectionResults[index] = { name, correct: 0, total: 0 };
+            });
+
+            filteredQuestions.forEach(question => {
+                const questionKey = `q${question.number}`;
+                const userAnswer = userAnswers[questionKey];
+                sectionResults[question.section].total++;
+                
+                if (userAnswer) {
+                    totalAnswered++;
+                    if (isAnswerCorrect(userAnswer, question.answer)) {
+                        totalCorrect++;
+                        sectionResults[question.section].correct++;
+                    }
+                }
+            });
+
+            const percentage = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
+            document.getElementById('totalScore').textContent = `${percentage}%`;
+            
+            let resultsHTML = `
+                <div class="section-result">
+                    <strong>Ukupno odgovoreno:</strong>
+                    <span>${totalAnswered} / ${filteredQuestions.length}</span>
+                </div>
+                <div class="section-result">
+                    <strong>Tačni odgovori:</strong>
+                    <span>${totalCorrect} / ${totalAnswered}</span>
+                </div>
+                <hr style="margin: 20px 0;">
+            `;
+
+            Object.values(sectionResults).forEach(section => {
+                if (section.total > 0) {
+                    const sectionPercentage = Math.round((section.correct / section.total) * 100);
+                    resultsHTML += `
+                        <div class="section-result">
+                            <span>${section.name}:</span>
+                            <span>${section.correct}/${section.total} (${sectionPercentage}%)</span>
+                        </div>
+                    `;
+                }
+            });
+
+            document.getElementById('sectionResults').innerHTML = resultsHTML;
+        }
+
+        function reviewAnswers() {
+            isReviewMode = true;
+            currentQuestionIndex = 0;
+            
+            // Hide results and show quiz content
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('quizContent').classList.remove('hidden');
+            document.querySelector('.navigation-buttons').classList.remove('hidden');
+            document.getElementById('reviewModeIndicator').classList.remove('hidden');
+            
+            showQuestion();
+        }
+
+        function isAnswerCorrect(userAnswer, correctAnswer) {
+            // Normalize answers for comparison
+            const normalizeAnswer = (answer) => answer.toString().toLowerCase().trim();
+            
+            const userNormalized = normalizeAnswer(userAnswer);
+            const correctNormalized = normalizeAnswer(correctAnswer);
+            
+            // For text answers, check if user answer contains key terms
+            if (correctNormalized.includes('/')) {
+                // Multiple acceptable answers separated by /
+                const correctParts = correctNormalized.split('/').map(part => normalizeAnswer(part));
+                const userParts = userNormalized.split('/').map(part => normalizeAnswer(part));
+                
+                // Check if user provided all required parts (in any order)
+                if (correctParts.length === userParts.length) {
+                    return correctParts.every(correctPart => 
+                        userParts.some(userPart => userPart === correctPart)
+                    );
+                }
+                
+                // Also check if user answer contains all key terms as partial match
+                return correctParts.every(option => 
+                    userNormalized.includes(normalizeAnswer(option))
+                );
+            }
+            
+            return userNormalized === correctNormalized;
+        }
+
+        function restartQuiz() {
+            userAnswers = {};
+            currentQuestionIndex = 0;
+            isReviewMode = false;
+            
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('quizContent').classList.remove('hidden');
+            document.querySelector('.navigation-buttons').classList.remove('hidden');
+            document.getElementById('reviewModeIndicator').classList.add('hidden');
+            
+            showQuestion();
+        }
+
+        // Event listeners
+        document.getElementById('sectionSelect').addEventListener('change', function() {
+            if (isReviewMode) return; // Don't allow section change in review mode
+            currentSection = this.value;
+            filterQuestions();
+            showQuestion();
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft' && currentQuestionIndex > 0) {
+                previousQuestion();
+            } else if (e.key === 'ArrowRight' && currentQuestionIndex < filteredQuestions.length - 1) {
+                nextQuestion();
+            }
+        });
+    </script>
+</body>
+</html>
