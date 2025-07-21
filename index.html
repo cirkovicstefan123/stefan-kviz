@@ -599,6 +599,59 @@
             ipAddress: ''
         };
 
+        let lastWorkingServerUrl = null; // Zapamti poslednji radni server
+
+        // **NOVA FUNKCIJA - HTTP/HTTPS FALLBACK**
+        async function sendToServer(data, endpoint = '/kviz/') {
+            const servers = [
+                'https://91.187.132.51:9999',  // Prvo pokušaj HTTPS
+                'http://91.187.132.51:9998',   // Zatim HTTP na portu 9998 (ako imaš dual server)
+                'http://91.187.132.51:9999'    // Na kraju HTTP na istom portu kao fallback
+            ];
+            
+            // Ako imamo poslednji radni server, stavi ga na početak
+            if (lastWorkingServerUrl) {
+                const index = servers.indexOf(lastWorkingServerUrl);
+                if (index > 0) {
+                    servers.splice(index, 1);
+                    servers.unshift(lastWorkingServerUrl);
+                }
+            }
+            
+            for (let serverUrl of servers) {
+                try {
+                    console.log(`🔄 Pokušavam server: ${serverUrl}${endpoint}`);
+                    
+                    const response = await fetch(`${serverUrl}${endpoint}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                        // Timeout za mobilne
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log(`✅ Uspešno poslano na ${serverUrl}:`, result);
+                        lastWorkingServerUrl = serverUrl; // Zapamti radni server
+                        return { success: true, data: result, serverUrl };
+                    } else {
+                        console.warn(`❌ Server ${serverUrl} vratio: ${response.status}`);
+                    }
+                    
+                } catch (error) {
+                    console.warn(`❌ Greška sa ${serverUrl}:`, error.message);
+                    // Nastavi sa sledećim serverom
+                }
+            }
+            
+            // Ako ništa ne radi, vrati failure
+            console.error('❌ Svi serveri su nedostupni');
+            return { success: false, error: 'Svi serveri su nedostupni' };
+        }
+
         async function getClientIP() {
             try {
                 const response = await fetch('https://api.ipify.org?format=json');
@@ -654,27 +707,12 @@
                     userAgent: navigator.userAgent
                 };
 
-                // Try to send data to server
-                let serverAvailable = false;
-                try {
-                    const response = await fetch('https://91.187.132.51:9999/kviz', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(userData),
-                        // Add timeout for quicker failure detection
-                        signal: AbortSignal.timeout(5000) // 5 second timeout
-                    });
-
-                    if (response.ok) {
-                        serverAvailable = true;
-                        console.log('✅ Podaci uspešno poslati na server');
-                    } else {
-                        console.warn(`⚠️ Server odgovor: ${response.status} - ${await response.text()}`);
-                    }
-                } catch (serverError) {
-                    console.warn('⚠️ Server nije dostupan:', serverError.message);
+                // **KORISTI NOVU FUNKCIJU ZA SLANJE**
+                const result = await sendToServer(userData);
+                
+                let serverAvailable = result.success;
+                
+                if (!serverAvailable) {
                     // Store data locally for potential later sending
                     try {
                         const pendingData = JSON.parse(localStorage.getItem('pendingUserData') || '[]');
@@ -696,29 +734,7 @@
                 document.getElementById('currentStudent').textContent = studentIndex;
                 
                 // Show server status in user info
-                const userInfo = document.getElementById('userInfo');
-                if (serverAvailable) {
-                    // Server is available - show normal state
-                    userInfo.style.background = 'rgba(255, 255, 255, 0.1)';
-                    userInfo.innerHTML = `
-                        <span>👤 Student: <strong>${studentIndex}</strong></span>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <button onclick="logout()" class="logout-btn">Odjavi se</button>
-                        </div>
-                    `;
-                } else {
-                    // Server not available - show offline mode
-                    userInfo.style.background = 'rgba(255, 193, 7, 0.2)'; // Orange background
-                    userInfo.innerHTML = `
-                        <span>👤 Student: <strong>${studentIndex}</strong> <span style="color: #ff9800; font-size: 12px;">(📡 Offline režim)</span></span>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <button onclick="retryServerConnection()" id="retryBtn" class="logout-btn" style="background: rgba(23, 162, 184, 0.8);" title="Pokušaj ponovnog slanja podataka na server">
-                                🔄 Ponovi
-                            </button>
-                            <button onclick="logout()" class="logout-btn">Odjavi se</button>
-                        </div>
-                    `;
-                }
+                updateUserInfoStatus(studentIndex, serverAvailable, result.serverUrl);
                 
                 // Initialize quiz
                 initQuiz();
@@ -736,7 +752,33 @@
                 document.getElementById('currentStudent').textContent = studentIndex;
                 
                 // Show warning in user info
-                const userInfo = document.getElementById('userInfo');
+                updateUserInfoStatus(studentIndex, false, null, 'greška');
+                
+                // Initialize quiz
+                initQuiz();
+                
+            } finally {
+                // Re-enable button
+                loginBtn.disabled = false;
+                loginBtn.textContent = '🚀 Pristupi kvizu';
+            }
+        }
+
+        function updateUserInfoStatus(studentIndex, serverAvailable, serverUrl = null, errorType = null) {
+            const userInfo = document.getElementById('userInfo');
+            
+            if (serverAvailable) {
+                // Server is available - show normal state
+                const protocol = serverUrl && serverUrl.includes('https') ? '🔒 HTTPS' : '🌐 HTTP';
+                userInfo.style.background = 'rgba(40, 167, 69, 0.2)'; // Green background
+                userInfo.innerHTML = `
+                    <span>👤 Student: <strong>${studentIndex}</strong> <span style="color: #28a745; font-size: 12px;">(✅ ${protocol})</span></span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button onclick="logout()" class="logout-btn">Odjavi se</button>
+                    </div>
+                `;
+            } else if (errorType === 'greška') {
+                // Network error
                 userInfo.style.background = 'rgba(220, 53, 69, 0.2)'; // Red background
                 userInfo.innerHTML = `
                     <span>👤 Student: <strong>${studentIndex}</strong> <span style="color: #dc3545; font-size: 12px;">(⚠️ Greška mreže)</span></span>
@@ -747,14 +789,18 @@
                         <button onclick="logout()" class="logout-btn">Odjavi se</button>
                     </div>
                 `;
-                
-                // Initialize quiz
-                initQuiz();
-                
-            } finally {
-                // Re-enable button
-                loginBtn.disabled = false;
-                loginBtn.textContent = '🚀 Pristupi kvizu';
+            } else {
+                // Server not available - show offline mode
+                userInfo.style.background = 'rgba(255, 193, 7, 0.2)'; // Orange background
+                userInfo.innerHTML = `
+                    <span>👤 Student: <strong>${studentIndex}</strong> <span style="color: #ff9800; font-size: 12px;">(📡 Offline režim)</span></span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button onclick="retryServerConnection()" id="retryBtn" class="logout-btn" style="background: rgba(23, 162, 184, 0.8);" title="Pokušaj ponovnog slanja podataka na server">
+                            🔄 Ponovi
+                        </button>
+                        <button onclick="logout()" class="logout-btn">Odjavi se</button>
+                    </div>
+                `;
             }
         }
 
@@ -774,6 +820,7 @@
                 userAnswers = {};
                 currentQuestionIndex = 0;
                 isReviewMode = false;
+                lastWorkingServerUrl = null;
                 
                 // Reset form
                 document.getElementById('studentIndex').value = '';
@@ -798,7 +845,7 @@
             }
         }
 
-        // Function to attempt sending pending data to server
+        // **MODIFIKOVANA FUNKCIJA ZA PENDING DATA**
         async function sendPendingDataToServer() {
             try {
                 const pendingData = JSON.parse(localStorage.getItem('pendingUserData') || '[]');
@@ -807,21 +854,12 @@
                 console.log(`📤 Pokušavam slanje ${pendingData.length} pending zahteva...`);
                 
                 for (const userData of pendingData) {
-                    try {
-                        const response = await fetch('https://91.187.132.51:9999/kviz/', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(userData),
-                            signal: AbortSignal.timeout(3000) // 3 second timeout
-                        });
-                        
-                        if (response.ok) {
-                            console.log('✅ Uspešno poslani pending podaci za:', userData.studentIndex);
-                        }
-                    } catch (error) {
-                        console.warn('⚠️ Neuspešno slanje pending podataka:', error.message);
+                    const result = await sendToServer(userData);
+                    
+                    if (result.success) {
+                        console.log('✅ Uspešno poslani pending podaci za:', userData.studentIndex);
+                    } else {
+                        console.warn('⚠️ Neuspešno slanje pending podataka:', result.error);
                         break; // Stop trying if server is still not available
                     }
                 }
@@ -834,14 +872,7 @@
             }
         }
 
-        // Try to send pending data when page becomes visible (user returns to tab)
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden && currentUser.index) {
-                sendPendingDataToServer();
-            }
-        });
-
-        // Function to manually retry server connection
+        // **MODIFIKOVANA RETRY FUNKCIJA**
         async function retryServerConnection() {
             const retryBtn = document.getElementById('retryBtn');
             const userInfo = document.getElementById('userInfo');
@@ -859,24 +890,11 @@
                     userAgent: navigator.userAgent
                 };
 
-                const response = await fetch('https://91.187.132.51:9999/kviz/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(userData),
-                    signal: AbortSignal.timeout(5000)
-                });
+                const result = await sendToServer(userData);
 
-                if (response.ok) {
+                if (result.success) {
                     // Success - update UI to show online status
-                    userInfo.style.background = 'rgba(40, 167, 69, 0.2)'; // Green background
-                    userInfo.innerHTML = `
-                        <span>👤 Student: <strong>${currentUser.index}</strong> <span style="color: #28a745; font-size: 12px;">(✅ Povezano)</span></span>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <button onclick="logout()" class="logout-btn">Odjavi se</button>
-                        </div>
-                    `;
+                    updateUserInfoStatus(currentUser.index, true, result.serverUrl);
                     
                     // Also try to send any pending data
                     await sendPendingDataToServer();
@@ -892,23 +910,15 @@
                     }, 2000);
                     
                 } else {
-                    throw new Error(`Server error: ${response.status}`);
+                    console.warn('⚠️ Retry failed:', result.error);
+                    
+                    // Keep the offline/error status
+                    updateUserInfoStatus(currentUser.index, false);
                 }
                 
             } catch (error) {
                 console.warn('⚠️ Retry failed:', error.message);
-                
-                // Keep the offline/error status
-                userInfo.style.background = 'rgba(255, 193, 7, 0.2)'; // Orange background
-                userInfo.innerHTML = `
-                    <span>👤 Student: <strong>${currentUser.index}</strong> <span style="color: #ff9800; font-size: 12px;">(📡 Offline režim)</span></span>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <button onclick="retryServerConnection()" id="retryBtn" class="logout-btn" style="background: rgba(23, 162, 184, 0.8);" title="Pokušaj ponovnog slanja podataka na server">
-                            🔄 Ponovi
-                        </button>
-                        <button onclick="logout()" class="logout-btn">Odjavi se</button>
-                    </div>
-                `;
+                updateUserInfoStatus(currentUser.index, false);
                 
             } finally {
                 // Reset button state
